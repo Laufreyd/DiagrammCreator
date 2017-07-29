@@ -1,16 +1,13 @@
 var resultsArray = {
-  'Martine':10,
-  'Louise':10,
-  'Cerbère':10,
+  'Martine':12,
+  'Louise':25,
+  'test':75
 }
 
-//Fonction qui génère un diagramme circulaire automatiquement
 function circularDiagramm(resultsArray){
   if(typeof(resultsArray) == "object"){
 
     var coordonneesCenterDiagramm = [250, 250], rayonDiagramm = 250;
-
-    coordonneesPointArray = calculateCoordonnesPoints(resultsArray, coordonneesCenterDiagramm, rayonDiagramm);
 
     var container = document.getElementById('DiagrammeCirculaire');
 
@@ -18,7 +15,7 @@ function circularDiagramm(resultsArray){
     svg.setAttribute('width', 500);
     svg.setAttribute('height', 500);
 
-    svg = createPaths(svg, coordonneesPointArray, coordonneesCenterDiagramm);
+    svg = generateSVGBody(resultsArray, svg, coordonneesCenterDiagramm, rayonDiagramm);
 
     container.appendChild(svg);
   }
@@ -27,39 +24,60 @@ function circularDiagramm(resultsArray){
   }
 }
 
-function calculateCoordonnesPoints(resultsArray, coordonneesCenterDiagramm, rayonDiagramm){
-  var pourcentAvancement = 0,position = 0, coordonneesPoints = [], totalResults = 0;
+function generateSVGBody(resultsArray, svg, coordonneesCenterDiagramm, rayonDiagramm){
+  var totalResults = 0;
 
   for(variableAvancement in resultsArray){
     totalResults += resultsArray[variableAvancement];
   }
 
-  for(variableAvancement in resultsArray){
-    coordonneesPoints[position] = [];
-    coordonneesPoints[position][0] = Math.cos((pourcentAvancement * 3.6) * (Math.PI / 180)) * rayonDiagramm + coordonneesCenterDiagramm[0];
-    coordonneesPoints[position][1] = Math.abs(Math.sin((pourcentAvancement * 3.6) * (Math.PI / 180)) * rayonDiagramm - coordonneesCenterDiagramm[1]);
+  coordonneesPoints = calculateCoordonnesPoints(resultsArray, coordonneesCenterDiagramm, rayonDiagramm, totalResults);
 
-    position++;
+  svg = createPaths(svg, coordonneesPoints, coordonneesCenterDiagramm, resultsArray, totalResults);
+
+  return svg;
+}
+
+function calculateCoordonnesPoints(resultsArray, coordonneesCenterDiagramm, rayonDiagramm, totalResults){
+  var pourcentAvancement = 0,coordonneesPoints = [];
+
+  for(variableAvancement in resultsArray){
+    coordonneesPoints[variableAvancement] = [];
+    coordonneesPoints[variableAvancement][0] = Math.cos((pourcentAvancement * 3.6) * (Math.PI / 180)) * rayonDiagramm + coordonneesCenterDiagramm[0];
+    coordonneesPoints[variableAvancement][1] = Math.abs(Math.sin((pourcentAvancement * 3.6) * (Math.PI / 180)) * rayonDiagramm - coordonneesCenterDiagramm[1]);
+
     pourcentAvancement += resultsArray[variableAvancement] * 100 / totalResults;
   }
+
   return coordonneesPoints;
 }
 
-function createPaths(svg, coordonneesPoints, coordonneesCenterDiagramm){
+function createPaths(svg, coordonneesPoints, coordonneesCenterDiagramm, resultsArray, totalResults){
+
   var center = "M" + coordonneesCenterDiagramm[0] + "," + coordonneesCenterDiagramm[1];
-  var arc = "A" + coordonneesCenterDiagramm[0] + "," + coordonneesCenterDiagramm[1] + " 0 0,0 ";
-  var longueur = coordonneesPoints.length - 1, firstPoint, lastPoint, pathString = "";
+  var firstPoint, lastPoint, pathString = "";
+  var taille = Object.keys(coordonneesPoints).length - 1;
+  var keys = Object.keys(resultsArray);
 
   for(variable in coordonneesPoints){
     var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    var arc = "A" + coordonneesCenterDiagramm[0] + "," + coordonneesCenterDiagramm[1];
 
     var firstPoint = "L" + coordonneesPoints[variable][0] + "," + coordonneesPoints[variable][1];
 
-    if(parseInt(variable) != longueur){
-      lastPoint = coordonneesPoints[parseInt(variable)+1][0] + "," + coordonneesPoints[parseInt(variable)+1][1];
+    if(resultsArray[variable] > (totalResults / 2)){
+      arc += " 0 1,0 "
+    }
+
+    else{
+      arc += " 0 0,0 ";
+    }
+
+    if(keys.indexOf(variable) != taille){
+      lastPoint = coordonneesPoints[keys[keys.indexOf(variable)+1]][0] + "," + coordonneesPoints[keys[keys.indexOf(variable)+1]][1];
     }
     else{
-      lastPoint = coordonneesPoints[0][0] + "," + coordonneesPoints[0][1];
+      lastPoint = coordonneesPoints[keys[0]][0] + "," + coordonneesPoints[keys[0]][1];
     }
 
     pathString = center + firstPoint + arc + lastPoint + " z";
