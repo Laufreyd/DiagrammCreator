@@ -1,7 +1,7 @@
 var resultsArray = {
-  'Martine':33,
+  'Martine':10,
   'Louise':10,
-  'Cerbère':33
+  'Cerbère':10,
 }
 
 //Fonction qui génère un diagramme circulaire automatiquement
@@ -28,7 +28,11 @@ function circularDiagramm(resultsArray){
 }
 
 function calculateCoordonnesPoints(resultsArray, coordonneesCenterDiagramm, rayonDiagramm){
-  var pourcentAvancement = 0,position = 0, coordonneesPoints = [];
+  var pourcentAvancement = 0,position = 0, coordonneesPoints = [], totalResults = 0;
+
+  for(variableAvancement in resultsArray){
+    totalResults += resultsArray[variableAvancement];
+  }
 
   for(variableAvancement in resultsArray){
     coordonneesPoints[position] = [];
@@ -36,7 +40,7 @@ function calculateCoordonnesPoints(resultsArray, coordonneesCenterDiagramm, rayo
     coordonneesPoints[position][1] = Math.abs(Math.sin((pourcentAvancement * 3.6) * (Math.PI / 180)) * rayonDiagramm - coordonneesCenterDiagramm[1]);
 
     position++;
-    pourcentAvancement += resultsArray[variableAvancement];
+    pourcentAvancement += resultsArray[variableAvancement] * 100 / totalResults;
   }
   return coordonneesPoints;
 }
