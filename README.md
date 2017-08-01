@@ -15,15 +15,13 @@ Le but du fichier est de permettre à l'utilisateur de pouvoir créer un diagram
 
    *Exemple:* Si le fichier se situe au même niveau que votre page HTML, le code sera : <script type="text/javascript" src="DiagrammCreator.js"></script>
 
+   *Attention:* Pensez bien, si vous avez votre propre fichier javascript qui s'appuie sur une fonction de 'DiagrammCreator', à bien mettre ce dernier AVANT le votre, sinon la fonction n'existera pas pour lui.
+
 3. Utiliser les fonctions
 
     Enfin, pour générer un diagramme circulaire, depuis un fichier js ou une balise <script>, inserez le code suivant :
 
-    window.onload = function(){
-
     circularDiagramm(resultsArray);
-
-    }
 
     La fonction 'circularDiagramm' permet de générer le diagramme circulaire. Elle prend en argument 'resultsArray' qui est un objet contenant les résultats.
 

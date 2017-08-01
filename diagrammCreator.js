@@ -16,9 +16,12 @@ function circularDiagramm(resultsArray, width = 600, height = 300){
   //On vérifie la validité de l'argument de resultsArray
   if(typeof(resultsArray) == "object"){
 
-    //Gère l'initialisation et la finalisation
-    generateCircularDiagramm(resultsArray, [width, height]);
+    //Attend que la page soit bien chargé
+    window.onload = function(){
 
+      //Gère l'initialisation et la finalisation
+      generateCircularDiagramm(resultsArray, [width, height]);
+    }
   }
   else{
     console.error("Les résultats ne sont pas sous forme d'objet");
