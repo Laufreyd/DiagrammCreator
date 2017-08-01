@@ -35,7 +35,7 @@ function generateCircularDiagramm(resultsArray){
   var container = document.getElementById('DiagrammeCirculaire');
 
   //Gère l'appel aux différentes fonctions
-  svg = generateSVGBody(resultsArray, coordonneesCenterDiagramm, rayonDiagramm);
+  svg = generateSVG(resultsArray, coordonneesCenterDiagramm, rayonDiagramm);
 
   container.appendChild(svg);
 }
@@ -49,7 +49,7 @@ function generateCircularDiagramm(resultsArray){
 *
 * @return svg{ Object }: Balise HTML qui contiendra le diagramme
 */
-function generateSVGBody(resultsArray, coordonneesCenterDiagramm, rayonDiagramm){
+function generateSVG(resultsArray, coordonneesCenterDiagramm, rayonDiagramm){
 
   //Création de la balise 'svg'
   svg = generateSVGTag();
@@ -61,7 +61,7 @@ function generateSVGBody(resultsArray, coordonneesCenterDiagramm, rayonDiagramm)
   coordonneesPoints = calculateCoordonnesPoints(coordonneesCenterDiagramm, rayonDiagramm, resultsInPercent);
 
   //Balise svg
-  svg = createPaths(svg, coordonneesPoints, coordonneesCenterDiagramm, resultsInPercent, rayonDiagramm);
+  svg = generateSVGBody(svg, coordonneesPoints, coordonneesCenterDiagramm, resultsInPercent, rayonDiagramm);
 
   return svg;
 }
@@ -88,7 +88,7 @@ function generateSVGTag(){
 *
 * @param resultsArray{ Object }: Contient les résultats
 *
-* @return resultsPercentArray{ Object }: Contient les résultats en pourcentage
+* @return resultsPercentArray{ Object }: Contient les résultats en pourcentage non nul
 */
 function calculatePercent(resultsArray){
 
@@ -104,7 +104,13 @@ function calculatePercent(resultsArray){
 
     //Calcule du pourcentage puis inseretion à l'arrondi 10^-1 près
     resultInPercent = resultsArray[variableAvancement] * 100 / totalResults;
-    resultsPercentArray[variableAvancement] = Math.round(resultInPercent * 10) / 10;
+    resultsInPercentRound = Math.round(resultInPercent * 10) / 10;
+
+    //Si le résultats n'est pas nul arrondi à 10^-1 près
+    if(resultsInPercentRound != 0){
+      resultsPercentArray[variableAvancement] = resultsInPercentRound;
+    }
+
   }
 
   //Classe le pourcentages par ordre croissant
@@ -186,65 +192,98 @@ function calculateCoordonnesPoints(coordonneesCenterDiagramm, rayonDiagramm, res
 *
 * @return svg{ Object }: Balise HTML qui contiendra le diagramme
 */
-function createPaths(svg, coordonneesPoints, coordonneesCenterDiagramm, resultsInPercent, rayonDiagramm){
+function generateSVGBody(svg, coordonneesPoints, coordonneesCenterDiagramm, resultsInPercent, rayonDiagramm){
+
+  //Si aucun résultat ne correspond à 100%
+  if(!Object.values(resultsInPercent).includes(100)){
+
+    //Appelle la fonction qui crééra les "paths"
+    svg = generatePaths(svg, coordonneesPoints, coordonneesCenterDiagramm, resultsInPercent);
+  }
+  else{
+    //Appelle la fonction qui crééra le cercle
+    svg = generateCircle(svg, coordonneesCenterDiagramm, rayonDiagramm);
+
+  }
+
+  return svg;
+}
+
+/**
+* Fonction qui génère les "paths"
+*
+* @param svg{ Object }: Balise HTML qui contiendra le diagramme
+* @param coordonneesPoints{ Object }: Contient les coordonnees des points
+* @param coordonneesCenterDiagramm{ Object }: Contient les coordonnées du centre du diagramme
+* @param resultsInPercent{ Object }: Contient les pourcentages des résultats
+*
+* @return svg{ Object }: Balise HTML qui contient le diagramme
+*/
+function generatePaths(svg, coordonneesPoints, coordonneesCenterDiagramm, resultsInPercent){
 
   //Initialisation des constantes
   var center = "M" + coordonneesCenterDiagramm[0] + "," + coordonneesCenterDiagramm[1];
   var arc = "A" + coordonneesCenterDiagramm[0] + "," + coordonneesCenterDiagramm[1] + " 0 ";
   var firstPoint, lastPoint, pathString, arcSpecification;
-  var keys = Object.keys(resultsInPercent); //Tableau contenant les clés
-  var values = Object.values(resultsInPercent); //Tableau contenant les pourcentages
-  var taille = values.length - 1; //Nombre de résultat
+  var keys = Object.keys(coordonneesPoints); //Tableau contenant les clés
+  var taille = keys.length - 1; //Nombre de résultat
 
-  //Si il n'ya pas de résultat qui vaut 100%
-  if(!values.includes(100)){
+  //Initialisation de la balise 'g' qui groupe tout les "paths"
+  var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 
-    //Pour chacun des points, on créer le "path"
-    for(variable in coordonneesPoints){
+  //Pour chacun des points, on créer le "path"
+  for(variable in coordonneesPoints){
 
-      //Si le pourcentage n'est pas nul
-      if(resultsInPercent[variable] != 0){
+      //Initialise la balise "path"
+      var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
 
-        //Initialise la balise "path"
-        var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      //Création du premier point
+      var firstPoint = "L" + coordonneesPoints[variable][0] + "," + coordonneesPoints[variable][1];
 
-        //Création du premier point
-        var firstPoint = "L" + coordonneesPoints[variable][0] + "," + coordonneesPoints[variable][1];
+      //Création du dernier point
+      indexNextPoint = keys[keys.indexOf(variable)+1] == undefined ? keys[0] : keys[keys.indexOf(variable)+1];
+      lastPoint = coordonneesPoints[indexNextPoint][0] + "," + coordonneesPoints[indexNextPoint][1];
 
-        //Modification de l'arc en fonction du résultat supérieur à 50% ou non
-        if(resultsInPercent[variable] > 50){ arcSpecification = "1,0 "; }
-        else{ arcSpecification = "0,0 "; }
+      //Modification de l'arc en fonction du résultat supérieur à 50% ou non
+      if(resultsInPercent[variable] > 50){ arcSpecification = "1,0 "; }
+      else{ arcSpecification = "0,0 "; }
 
-        //Création du dernier point
-        if(keys.indexOf(variable) != taille){
-          indexNextPoint = keys[keys.indexOf(variable)+1];
-          lastPoint = coordonneesPoints[indexNextPoint][0] + "," + coordonneesPoints[indexNextPoint][1];
-        }
-        else{
-          lastPoint = coordonneesPoints[keys[0]][0] + "," + coordonneesPoints[keys[0]][1];
-        }
+      pathString = center + firstPoint + arc + arcSpecification + lastPoint + " z";
 
-        pathString = center + firstPoint + arc + arcSpecification + lastPoint + " z";
+      path.setAttribute('d', pathString);
+      path.setAttribute('stroke', '#ffffff');
+      path.setAttribute('stroke-width', 1);
 
-        path.setAttribute('d', pathString);
-        path.setAttribute('stroke', '#ffffff');
-        path.setAttribute('stroke-width', 1);
-
-        svg.appendChild(path);
-      }
-    }
-
+      //Ajout du "path" dans le groupe
+      g.appendChild(path);
   }
-  //Si le résultat est de 100%
-  else{
-    var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
 
-    circle.setAttribute('cx', coordonneesCenterDiagramm[0]);
-    circle.setAttribute('cy', coordonneesCenterDiagramm[1]);
-    circle.setAttribute('r', rayonDiagramm);
+  //Ajout du groupe au diagramme
+  svg.appendChild(g);
 
-    svg.appendChild(circle);
-  }
+  return svg;
+}
+
+/**
+* Fonction qui génère le cercle si un résultat vaut 100%
+*
+* @param svg{ Object }: Balise HTML qui contiendra le diagramme
+* @param coordonneesCenterDiagramm{ Object }: Contient les coordonnées du centre du diagramme
+* @param rayonDiagramm{ Number }: Contient le rayon du diagramme
+*
+* @return svg{ Object }: Balise HTML qui contiendra le diagramme
+*/
+function generateCircle(svg, coordonneesCenterDiagramm, rayonDiagramm){
+
+  //Initialise le cercle
+  var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+
+  circle.setAttribute('cx', coordonneesCenterDiagramm[0]);
+  circle.setAttribute('cy', coordonneesCenterDiagramm[1]);
+  circle.setAttribute('r', rayonDiagramm);
+
+  //Ajout du cercle dans la balise "svg"
+  svg.appendChild(circle);
 
   return svg;
 }
