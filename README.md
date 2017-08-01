@@ -28,3 +28,5 @@ Le but du fichier est de permettre à l'utilisateur de pouvoir créer un diagram
     La fonction 'circularDiagramm' permet de générer le diagramme circulaire. Elle prend en argument 'resultsArray' qui est un objet contenant les résultats.
 
     *Exemple de 'resultsArray':* resultsArray = { 'argument1': 10, 'argument2': 15, 'argument3': 20 };
+
+    La fonction peut également prendre deux autres arguments facultatif : 'width' et 'height', qui correspondent respectivement à la longueur et la hauteur qu'aura le conteneur du diagramme.
