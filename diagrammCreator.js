@@ -75,7 +75,7 @@ function generateSVG(resultsArray, globalInfoDiagramm){
   svg = generateBackGround(svg, globalInfoDiagramm);
 
   //Génère les titres des résultats
-  svg = generateTitleResults(svg, resultsInPercent, infoDiagramm);
+  svg = generateTitleResults(svg, resultsInPercent, infoDiagramm, coloursResults);
 
   //Coeur de la balise svg
   svg = generateSVGBody(svg, coordonneesPoints, infoDiagramm, resultsInPercent, coloursResults);
@@ -89,8 +89,8 @@ function generateSVG(resultsArray, globalInfoDiagramm){
 * @return coloursResults{Array} : Tableau contenant les couleurs
 */
 function generateColours(){
-  var coloursResults = ['#FF0000', '#00FF00','#0000FF', '#39002D', '#FFFF00'
-                      , '#00FFFF', '#FE5500', '#4C1B1B', '#002F2F', '#000000'];
+  var coloursResults = ['#FF0000', '#00FF00','#0000FF', '#39002D', '#FE5500'
+                      , '#00FFFF', '#4C1B1B', '#002F2F', '#FFFF00', '#000000'];
 
   return coloursResults;
 }
@@ -259,10 +259,11 @@ function generateBackGround(svg, globalInfoDiagramm){
 * @param svg{Object} : Balise HTML qui contiendra le diagramme
 * @param resultsInPercent{Object} : Contient les pourcentages des résultats
 * @param infoDiagramm{Object} : Contient les informations du diagramme
+* @param coloursResults{Array} : Tableau contenant les couleurs
 *
 * @return svg{Object} : Balise HTML qui contiendra le diagramme
 */
-function generateTitleResults(svg, resultsInPercent, infoDiagramm){
+function generateTitleResults(svg, resultsInPercent, infoDiagramm, coloursResults){
 
   //Récupération des titres
   var keys = Object.keys(resultsInPercent);
@@ -272,18 +273,38 @@ function generateTitleResults(svg, resultsInPercent, infoDiagramm){
   var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 
   for(variable in keys){
+    //Création de la balise sous-groupante
+    var gSecond = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+    //Variable de positionnement des éléments
+    var widthPosition = 2 * infoDiagramm[0] + infoDiagramm[2];
+    var heightPosition = infoDiagramm[1] + variable * 20 - halfSize;
+
     //Création de la balise de texte
     var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
 
     //Ajout des attributs au texte
-    text.setAttribute('x', 2 * infoDiagramm[0] + infoDiagramm[2]);
-    text.setAttribute('y', infoDiagramm[1] + variable * 20 - halfSize);
+    text.setAttribute('x', widthPosition);
+    text.setAttribute('y', heightPosition);
 
     //Ajout du texte
     text.appendChild(document.createTextNode(keys[variable]));
 
-    //Ajout à la balise groupante
-    g.appendChild(text);
+    //Création du cercle
+    var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+
+    //Positionnement et ajout des caractéristiques du cercle
+    circle.setAttribute('cx', widthPosition - 10); //10 = espace pour laisser le cercle + espace
+    circle.setAttribute('cy', heightPosition - 4); //4 = 16 - 12 (taille écriture - diamètre)
+    circle.setAttribute('r', 6);
+    circle.setAttribute('style', 'fill:' + coloursResults[variable] + ';');
+
+    //Ajout du circle et du texte
+    gSecond.appendChild(circle);
+    gSecond.appendChild(text);
+
+    //Ajout à la balise groupante principale
+    g.appendChild(gSecond);
   }
   //Ajout à la balise svg
   svg.appendChild(g);
