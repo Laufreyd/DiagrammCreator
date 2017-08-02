@@ -42,6 +42,7 @@ function generateCircularDiagramm(resultsArray, globalInfoDiagramm){
   //Gère l'appel aux différentes fonctions
   svg = generateSVG(resultsArray, globalInfoDiagramm);
 
+  //Ajout la balise svg
   container.appendChild(svg);
 }
 
@@ -49,14 +50,14 @@ function generateCircularDiagramm(resultsArray, globalInfoDiagramm){
 * Fonction qui générera la balise svg et son contenu
 *
 * @param resultsArray{Object} : Contient les résultats du diagramme
-* @param infoDiagramm{Object} : Contient les informations du diagramme
+* @param globalInfoDiagramm{Array} : Contient les informations globales(diagramme, balise,...)
 *
 * @return svg{Object} : Balise HTML qui contiendra le diagramme
 */
 function generateSVG(resultsArray, globalInfoDiagramm){
 
   //Initialisation des données utilisés à l'avenir
-  var infoDiagramm = generateInfoDiagramm(globalInfoDiagramm);
+  infoDiagramm = generateInfoDiagramm(globalInfoDiagramm);
 
   //Création de la balise 'svg'
   svg = generateSVGTag(globalInfoDiagramm);
@@ -69,6 +70,9 @@ function generateSVG(resultsArray, globalInfoDiagramm){
 
   //Génère le fond du diagramme
   svg = generateBackGround(svg, globalInfoDiagramm);
+
+  //Génère les titres des résultats
+  svg = generateTitleResults(svg, resultsArray, infoDiagramm);
 
   //Coeur de la balise svg
   svg = generateSVGBody(svg, coordonneesPoints, infoDiagramm, resultsInPercent);
@@ -86,6 +90,7 @@ function generateSVG(resultsArray, globalInfoDiagramm){
 function generateInfoDiagramm(globalInfoDiagramm){
   var infoDiagramm = [];
 
+  //Calcule, dans l'ordre, le centre X, le centre Y et le rayon
   infoDiagramm[0] = globalInfoDiagramm[0] / 4;
   infoDiagramm[1] = globalInfoDiagramm[1] / 2;
   infoDiagramm[2] = Math.min(...infoDiagramm) / 1.5;
@@ -178,7 +183,6 @@ function orderedResults(resultsPercentArray){
   return orderedResultsPercent;
 }
 
-
 /**
 * Fonction qui calcule les coordonnées de tout les points utilisé à l'avenir
 *
@@ -218,18 +222,58 @@ function calculateCoordonnesPoints(infoDiagramm, resultsInPercent){
 */
 function generateBackGround(svg, globalInfoDiagramm){
 
+  //Créé la balise 'rect'
   var background = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
 
+  //On donne des attributs au fond
   background.setAttribute('x', 0);
   background.setAttribute('y', 0);
   background.setAttribute('width', globalInfoDiagramm[0]);
   background.setAttribute('height', globalInfoDiagramm[1]);
   background.setAttribute('style', 'fill:white;');
 
+  //Ajout du fond à la balise 'svg'
   svg.appendChild(background);
 
   return svg;
+}
 
+/**
+* Fonction qui génère les titres des résultats sur le côté du diagramme
+*
+* @param svg{Object} : Balise HTML qui contiendra le diagramme
+* @param resultsInPercent{Object} : Contient les pourcentages des résultats
+* @param infoDiagramm{Object} : Contient les informations du diagramme
+*
+* @return svg{Object} : Balise HTML qui contiendra le diagramme
+*/
+function generateTitleResults(svg, resultsInPercent, infoDiagramm){
+
+  //Récupération des titres
+  var keys = Object.keys(resultsInPercent);
+  var halfSize = Math.floor(keys.length / 2) * 20;
+
+  //Création de la balise groupante
+  var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+  for(variable in keys){
+    //Création de la balise de texte
+    var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+
+    //Ajout des attributs au texte
+    text.setAttribute('x', 2 * infoDiagramm[0] + infoDiagramm[2]);
+    text.setAttribute('y', infoDiagramm[1] + variable * 20 - halfSize);
+
+    //Ajout du texte
+    text.appendChild(document.createTextNode(keys[variable]));
+
+    //Ajout à la balise groupante
+    g.appendChild(text);
+  }
+  //Ajout à la balise svg
+  svg.appendChild(g);
+
+  return svg;
 }
 
 /**
@@ -247,14 +291,12 @@ function generateSVGBody(svg, coordonneesPoints, infoDiagramm, resultsInPercent)
 
   //Si aucun résultat ne correspond à 100%
   if(!Object.values(resultsInPercent).includes(100)){
-
     //Appelle la fonction qui crééra les "paths"
     svg = generatePaths(svg, coordonneesPoints, infoDiagramm, resultsInPercent);
   }
   else{
     //Appelle la fonction qui crééra le cercle
     svg = generateCircle(svg, infoDiagramm);
-
   }
 
   return svg;
