@@ -56,6 +56,9 @@ function generateCircularDiagramm(resultsArray, globalInfoDiagramm){
 */
 function generateSVG(resultsArray, globalInfoDiagramm){
 
+  //Tableau des couleurs
+  coloursResults = generateColours();
+
   //Initialisation des données utilisés à l'avenir
   infoDiagramm = generateInfoDiagramm(globalInfoDiagramm);
 
@@ -72,12 +75,24 @@ function generateSVG(resultsArray, globalInfoDiagramm){
   svg = generateBackGround(svg, globalInfoDiagramm);
 
   //Génère les titres des résultats
-  svg = generateTitleResults(svg, resultsArray, infoDiagramm);
+  svg = generateTitleResults(svg, resultsInPercent, infoDiagramm);
 
   //Coeur de la balise svg
-  svg = generateSVGBody(svg, coordonneesPoints, infoDiagramm, resultsInPercent);
+  svg = generateSVGBody(svg, coordonneesPoints, infoDiagramm, resultsInPercent, coloursResults);
 
   return svg;
+}
+
+/**
+* Fonction qui génère le tableau des couleurs
+*
+* @return coloursResults{Array} : Tableau contenant les couleurs
+*/
+function generateColours(){
+  var coloursResults = ['#FF0000', '#00FF00','#0000FF', '#39002D', '#FFFF00'
+                      , '#00FFFF', '#FE5500', '#4C1B1B', '#002F2F', '#000000'];
+
+  return coloursResults;
 }
 
 /**
@@ -140,10 +155,7 @@ function calculatePercent(resultsArray){
     resultInPercent = resultsArray[variableAvancement] * 100 / totalResults;
     resultsInPercentRound = Math.round(resultInPercent * 10) / 10;
 
-    //Si le résultats n'est pas nul arrondi à 10^-1 près
-    if(resultsInPercentRound != 0){
-      resultsPercentArray[variableAvancement] = resultsInPercentRound;
-    }
+    resultsPercentArray[variableAvancement] = resultsInPercentRound;
 
   }
 
@@ -198,15 +210,18 @@ function calculateCoordonnesPoints(infoDiagramm, resultsInPercent){
   //Calcul des coordonnées de chacun des points
   for(variableAvancement in resultsInPercent){
 
-    //Initialisation du tableau des coordonnées
-    coordonneesPoints[variableAvancement] = [];
+    if(resultsInPercent[variableAvancement] != 0){
 
-    degresAvancement = (pourcentAvancement * 3.6) * (Math.PI / 180);
+      //Initialisation du tableau des coordonnées
+      coordonneesPoints[variableAvancement] = [];
 
-    coordonneesPoints[variableAvancement][0] = Math.cos(degresAvancement) * infoDiagramm[2] + infoDiagramm[0];
-    coordonneesPoints[variableAvancement][1] = Math.abs(Math.sin(degresAvancement) * infoDiagramm[2] - infoDiagramm[1]);
+      degresAvancement = (pourcentAvancement * 3.6) * (Math.PI / 180);
 
-    pourcentAvancement += resultsInPercent[variableAvancement];
+      coordonneesPoints[variableAvancement][0] = Math.cos(degresAvancement) * infoDiagramm[2] + infoDiagramm[0];
+      coordonneesPoints[variableAvancement][1] = Math.abs(Math.sin(degresAvancement) * infoDiagramm[2] - infoDiagramm[1]);
+
+      pourcentAvancement += resultsInPercent[variableAvancement];
+    }
   }
 
   return coordonneesPoints;
@@ -284,19 +299,20 @@ function generateTitleResults(svg, resultsInPercent, infoDiagramm){
 * @param coordonneesPoints{Object} : Contient les coordonnees des points
 * @param infoDiagramm{Object} : Contient les informations du diagramme
 * @param resultsInPercent{Object} : Contient les pourcentages des résultats
+* @param coloursResults{Array} : Tableau contenant les couleurs
 *
 * @return svg{Object} : Balise HTML qui contiendra le diagramme
 */
-function generateSVGBody(svg, coordonneesPoints, infoDiagramm, resultsInPercent){
+function generateSVGBody(svg, coordonneesPoints, infoDiagramm, resultsInPercent, coloursResults){
 
   //Si aucun résultat ne correspond à 100%
   if(!Object.values(resultsInPercent).includes(100)){
     //Appelle la fonction qui crééra les "paths"
-    svg = generatePaths(svg, coordonneesPoints, infoDiagramm, resultsInPercent);
+    svg = generatePaths(svg, coordonneesPoints, infoDiagramm, resultsInPercent, coloursResults);
   }
   else{
     //Appelle la fonction qui crééra le cercle
-    svg = generateCircle(svg, infoDiagramm);
+    svg = generateCircle(svg, infoDiagramm, coloursResults[0]);
   }
 
   return svg;
@@ -309,10 +325,11 @@ function generateSVGBody(svg, coordonneesPoints, infoDiagramm, resultsInPercent)
 * @param coordonneesPoints{Object} : Contient les coordonnees des points
 * @param infoDiagramm{Object} : Contient les informations du diagramme
 * @param resultsInPercent{Object} : Contient les pourcentages des résultats
+* @param coloursResults{Array} : Tableau contenant les couleurs
 *
 * @return svg{Object} : Balise HTML qui contient le diagramme
 */
-function generatePaths(svg, coordonneesPoints, infoDiagramm, resultsInPercent){
+function generatePaths(svg, coordonneesPoints, infoDiagramm, resultsInPercent, coloursResults){
 
   //Initialisation des constantes
   var center = "M" + infoDiagramm[0] + "," + infoDiagramm[1];
@@ -344,8 +361,7 @@ function generatePaths(svg, coordonneesPoints, infoDiagramm, resultsInPercent){
       pathString = center + firstPoint + arc + arcSpecification + lastPoint + " z";
 
       path.setAttribute('d', pathString);
-      path.setAttribute('stroke', '#ffffff');
-      path.setAttribute('stroke-width', 1);
+      path.setAttribute('style', 'fill:' + coloursResults[keys.indexOf(variable)] + ';');
 
       //Ajout du "path" dans le groupe
       g.appendChild(path);
@@ -362,10 +378,11 @@ function generatePaths(svg, coordonneesPoints, infoDiagramm, resultsInPercent){
 *
 * @param svg{Object} : Balise HTML qui contiendra le diagramme
 * @param infoDiagramm{Object} : Contient les informations du diagramme
+* @param color{String} : Contient la couleur
 *
 * @return svg{Object} : Balise HTML qui contiendra le diagramme
 */
-function generateCircle(svg, infoDiagramm){
+function generateCircle(svg, infoDiagramm, color){
 
   //Initialise le cercle
   var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -373,6 +390,7 @@ function generateCircle(svg, infoDiagramm){
   circle.setAttribute('cx', infoDiagramm[0]);
   circle.setAttribute('cy', infoDiagramm[1]);
   circle.setAttribute('r', infoDiagramm[2]);
+  circle.setAttribute('style', 'fill:' + color + ';');
 
   //Ajout du cercle dans la balise "svg"
   svg.appendChild(circle);
